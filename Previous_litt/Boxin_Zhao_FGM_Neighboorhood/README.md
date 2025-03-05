@@ -19,3 +19,6 @@ I also found another reference that do something similar to what we want to do:
 - auc: Given an array of TPR and FPR, calculate its AUC ROC.
 - bases.func: Implement Fourier basis function definition; Evaualte Fourier, bspline, exponential and power bases in specific obs.time
 - prec.rec: Given the true adj matrix and the estimated adjacency matrix calculate TP, FP, TN, FN and return precision, recall, TPR and FPR
+
+## Folder Function
+This folder contains codes running multiple methods, namely FPCA-gX, FPCA-gY, FGLasso, PSKL, and FPCA-PSKL (for Model D). Threshold is set to $\epsilon = 0$. Penalty parameter $\lambda_n$ varies. Output results are TPR and FPR for each methods. Runtime of each method under each run is also recorded. A script is given for plotting ROC for all methods under each setting.
