@@ -321,21 +321,22 @@ CV_lambda_ppi <-
 
 # PARALLELIZED
 
-GGReg_cov_estimation <- function(Z0, # expression data (residuals on the mean), nrow: subjects; ncol: features.
-                                 known_ppi = NULL, # previously known PPI 
-                                 covariates = NULL, # covariates to regress on
-                                 scr = TRUE, # optional screening to speed up
-                                 gamma = NULL, # Person correlation threshold for the screening
-                                 lambda_prec = NULL, # Penalization term in the Lasso
-                                 lambda_prec_type = "1se", # or "min"
-                                 weight = 1.1, # Multiplicative factor for the penalization term when prior knowledge is not available
-                                 asparse = 0.75, # The relative weight to put on the `1-norm in sparse group lasso
-                                 verbose = FALSE,
-                                 eps = 1e-08) {
+FGGReg_cov_estimation <- function(scores, # functional score on a defined basis, nrow: subjects; ncol: functions*n_basis.
+                                  n_basis = 1, #Number of bases considered 
+                                  covariates  = NULL, #Additional covariates to regress on
+                                  scr = TRUE, # optional screening to speed up
+                                  gamma = NULL, # Person correlation threshold for the screening
+                                  lambda_prec = NULL, # Penalization term in the Lasso
+                                  lambda_prec_type = "1se", # or "min"
+                                  asparse = 0.75, # The relative weight to put on the `1-norm in sparse group lasso
+                                  verbose = FALSE,
+                                  eps = 1e-08) {
   
 
-  n <- nrow(Z0)
-  p <- ncol(Z0)
+  n <- nrow(scores)
+  M <- n_basis
+  Mp <- ncol(scores)
+  p <- ceil(ncol(scores)/n_basis)
   Ip <- diag(rep(1, p))
 
   if (is.null(covariates)) {
@@ -351,86 +352,66 @@ GGReg_cov_estimation <- function(Z0, # expression data (residuals on the mean), 
     iU <- C
   }
 
-  if (n < (q+1)*p) {
+  if (n < (q+1)*Mp) {
     warning("The sample size is too small! Network estimate may be unreliable!")
   }
   
-  if (!is.null(known_ppi)) {
-    one <- known_ppi
-    one[one > 0] <- 1
-    rownames(one) <- colnames(Z0)
-    penaltyfactor <- 1 - known_ppi
-  } else {
-    one <- matrix(0, p, p)
-    rownames(one) <- colnames(Z0)
-    penaltyfactor <- matrix(1, p, p)
-  }
-
   if (scr) {
     if (verbose) {
       cat("Computing correlation matrix \n")
     }
-    protdata_matrix <- as.matrix(Z0)
-    Scor <- cor(protdata_matrix)
+    score_matrix <- as.matrix(scores)
+    Scor <- cor(score_matrix)
     if (verbose) {
       cat("Done computing correlation matrix \n")
     }
-    scr_index <- matrix(1, p, p)
+    scr_index <- matrix(1, Mp, Mp)
     if (is.null(gamma)) {
       gamma <- quantile(abs(Scor), probs = 0.1)
     }
-    scr_index[abs(Scor) <= gamma] <- 0
-    diag(scr_index) <- 0
-    colnames(scr_index) <- colnames(Z0)
-    rownames(scr_index) <- colnames(Z0)
+    for(k in 1:p){
+      row_range <- ((M * (k - 1)) + 1):(M * k)
+      scr_index[row_range, row_range] <- 0
+      for (l in 1:p){
+        col_range <- ((M * (l - 1)) + 1):(M * l)
+        if (all(abs(Scor)[row_range, col_range] <= gamma))
+          scr_index[row_range, col_range] <- 0}
+    }
+    colnames(scr_index) <- colnames(scores)
+    rownames(scr_index) <- colnames(scores)
   }
 
   interM <- data.frame(Intercept = rep(1, n))
-  temp_groups <- c(0, rep(1, ncol(Z0)))
-  temp_w_group <- c(0)
-
-
-  # Register parallel backend for the first loop
-  numCores <- detectCores()
-  cl <- makeCluster(numCores)
-  registerDoParallel(cl)
-
+  temp_groups <- c(0)
+  
   if (verbose) {
     cat("Comuputation of the design matrix \n ")
   }
-  # Parallelize the first loop - Need to be tuned 
-  interM_results <- foreach(j = 1:(q + 1), .combine = 'cbind') %dopar% {
-    product <- Z0 * iU[, j]
+  
+  for(j in 1:(q + 1)){
+    product <- scores * iU[, j]
     if (j != 1) {
       original_colnames <- colnames(product)
       iU_name <- colnames(iU)[j]
-      temp_groups <- rep(j, length(original_colnames))
-      temp_w_group <- 1
       new_colnames <- paste(iU_name, ":", original_colnames, sep = "")
       colnames(product) <- new_colnames
     }
-    list(product = product, temp_groups  = temp_groups , temp_w_group=temp_w_group)
+    for (i in 1:p){temp_groups <- c(temp_groups, rep(i+(p*(j-1)),M))}
+    interM <- cbind(interM, product)
   }
 
-  stopCluster(cl)
-  groups <- c()
-  w_group <- c()
-  for(j in 1:(q + 1)){
-    groups <- c(groups, interM_results[,j]$temp_groups)
-    w_group <- c(w_group, interM_results[,j]$temp_w_group)
-    interM <- cbind(interM, interM_results[,j]$product)
-    }
-
- # FROM HERE ON
-  Delta <- matrix(0, p, ncol(interM))
-  colnames(Delta) <- colnames(interM)
-  rownames(Delta) <- colnames(Z0)
-  Sigma_hat <- rep(1, p)
-  names(Sigma_hat) <- colnames(Z0)
-  No_sim_Delta_hat <- matrix(0, p, ncol(interM))
+  # FROM HERE ON
+  Delta_scores <- matrix(0, Mp, ncol(interM))
+  colnames(Delta_scores) <- colnames(interM)
+  rownames(Delta_scores) <- colnames(scores)
+  No_sim_Delta_hat <- matrix(0, Mp, ncol(interM))
   colnames(No_sim_Delta_hat) <- colnames(interM)
-  rownames(No_sim_Delta_hat) <- colnames(Z0)
+  rownames(No_sim_Delta_hat) <- colnames(scores)
 
+  ##################################################
+  # DEVELOP THE SPARSE GROUP LASSO FOR MULTIPLE OUTCOME THEN MOVE ON
+  ##################################################
+  
   # Register parallel backend for the second loop
   cl <- makeCluster(numCores)
   registerDoParallel(cl)
@@ -498,6 +479,11 @@ GGReg_cov_estimation <- function(Z0, # expression data (residuals on the mean), 
 
   stopCluster(cl)
 
+  # DEFINE THE ADIACENCY MATRIX OF THE FUNCTIONS INSTEAD OF THE SCORES
+  Delta_fun <- matrix(0, p, ncol(interM))
+  colnames(Delta_fun) <- colnames(interM)
+  rownames(Delta_fun) <- colnames(scores)
+  
   for (i in 1:p) {
     Delta[i, ] <- results[,i]$Delta_row
     No_sim_Delta_hat[i, ] <- results[,i]$No_sim_Delta_hat_row
