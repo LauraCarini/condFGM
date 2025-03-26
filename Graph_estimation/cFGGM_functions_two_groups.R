@@ -842,7 +842,7 @@ Fast_FGGReg_diff_two_groups_SCV <- function(scores, # functional score on a defi
     N.hat.optimal <-  compute_Nj(A.X=A.X.out, A.Y=A.Y.out, M=M.out, d=d.out[[j]],
                            P=P.out, Q=Q.out, U=U.out, lambda =best_lambda, threshold=best_threshold, add=add.out)
 
-    N.hat.optimal
+    N.hat.optimal$N.hat
     cat("Computational time of: ")
     cat( Sys.time() - time.start )
     sink()
