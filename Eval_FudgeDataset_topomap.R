@@ -103,3 +103,4 @@ image(
 )
 axis(4, at=seq(0,1,length.out=5), labels=round(seq(min(w), max(w), length.out=5),2))
 box()
+
