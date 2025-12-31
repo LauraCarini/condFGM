@@ -33,6 +33,7 @@ The main configuration file in eahc simulation folders are the `config_*.yaml` f
 - save_path: Directory where simulation results will be saved
 - name_output: Prefix for saved result files
 - model_g1 and model_g2: Model specifications for the two groups
+- red_number: Define the number of edges affected by model_g1 and model_g2
 
 #### Algorithm Parameters
 - rec_basis_type: reconstruction basis type either "fourier" or "bsplines"
@@ -134,9 +135,6 @@ results/
 The `Function/` folder contains utility functions for:
 - Adjacency matrix simulation
 - Data generation helpers
-- Algorithm implementations
-
-Refer to the README in the `Function/` folder for detailed descriptions of available simulation models and their parameters.
 
 ## Citation
 
