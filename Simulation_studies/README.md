@@ -6,15 +6,9 @@ This repository contains the simulation pipeline for reproducing the results pre
 
 ```
 Simulation_studies/
-├── Function/                          # Helper functions for adjacency matrix simulation
-├── config_template.yaml              # Configuration template for simulations
-├── Data_simulator_tests.R            # Data generation script
-├── Sbatch_simulations_luncher_test.sh    # Main simulation launcher
-├── Sbatch_run_litt_comp_analysis.sh  # Competing algorithms launcher
-├── Sbatch_parallel_luncher_test.sh   # Parallel algorithm execution
-├── Process_logs_comp_time.R          # Computational time analysis (main algorithm)
-├── Process_logs_comp_time_litt_comp.R # Computational time analysis (competing algorithms)
-├── Check_results_screening_procedure_tests.R # Results validation
+├── Function/                         # Helper functions for adjacency matrix simulation
+├── Step 1 # Run the simualtion analysis in one setting with computational cost estimation and litterature comparison
+├── Step 2 # Run simulations across different scenarius
 ├── Plot_simulations_resulrs.R        # Results visualization
 └── Sumulation_full_pipeline.txt      # Terminal command pipeline
 ```
