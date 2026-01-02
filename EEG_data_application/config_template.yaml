@@ -1,26 +1,6 @@
 # ===================================================================
-# Systematic Simulation Configuration Template
+# Real-data Configuration Template
 # ===================================================================
-
-# === Externally set params ===
-# simulation_name: p{p}_n{n_g1}_n{n_g2}
-# iteration: int
-# tot_iteration: int
-# p: int
-# n_g1: int
-# n_g2: int
-# red_number: int -  floor(n_g1/3)
-
-
-# === Simulation Setup ===
-# func_path: /group/diangelantonio/users/alessia_mapelli/conditional_neurofgm/Simulation_studies/Pipeline_scripts/Functions
-# save_path: /group/diangelantonio/users/alessia_mapelli/Brain_simulations/systematic_simulations/Step1/
-# r_script: "/group/diangelantonio/users/alessia_mapelli/conditional_neurofgm/Simulation_studies/Pipeline_scripts/Simulation_paper/Step1/Sim_1_sbatch_parallel_screening_tests.R"
-# simulation_name: p50_n200_n200
-# iteration: 1
-# tot_iteration: 10
-# seed_g1: 2025
-# seed_g2: 1234
 
 # === Functional Data Generation 
 mu: 15 # number of basis used to generate data
@@ -28,30 +8,14 @@ tau: 256 # number of observations in the functional space [0,1]
 p: 64
 n_g1: 77
 n_g2: 45
-# model_g1: "A.prelim.func.red.R"
-# model_g2: "A.prelim.func.red.top.R"
-# red_number: 16
+
 
 # === Reconstruction & Dimensionality Reduction ===
 rec_basis_type: "fourier" # type of basis used to rencontrict the data
 rec_basis_number: 15 # how many basis are used to reconstrct the data
 M: 5  # number of fPC to retain
 
-# === Input Paths ===
-# name_output: "Scenario_B"
 
-# # === Model Parameters ===
-# L: 100
-# K: 5
-# thres_ctrl: [0, 0.2, 0.4, 0.8, 1.2, 1.6, 2.0]
-# tol_abs: 0.0001
-# tol_rel: 0.0001
-# eps: 0.00000001
-# verbose: false
-# p_rand_lam: 0.5
-# p_rand_thr: 1
-# pre_screen: false
-# pre_screen_threshold: null
 
 
 
